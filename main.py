@@ -13,5 +13,5 @@ def handle_request(request):
             Response object using `make_response`
             <https://flask.palletsprojects.com/en/latest/api/>.
         """
-    print(request.data)
+    print(request)
     return {}
