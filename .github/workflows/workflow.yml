@@ -1,5 +1,5 @@
-name: workflow
-run-name: workflow-deploy
+name: workflows
+run-name: workflows-deploy
 on:
   push:
     branches:
