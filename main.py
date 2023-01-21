@@ -56,7 +56,7 @@ def handle_request(request):
 
     comment_json = {"body": build_response_comment(parsed_json)}
     token = "Bearer {}".format(os.environ.get('TOKEN_GITHUB'))
-    comment_response = requests.post(data['comment']['issue_url'], headers={'Authorization': token}, json=comment_json)
+    comment_response = requests.post(data['issue']['comments_url'], headers={'Authorization': token}, json=comment_json)
     print(comment_response)
     print(comment_response.json())
 
