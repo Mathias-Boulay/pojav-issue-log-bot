@@ -17,6 +17,7 @@ def handle_request(request):
             <https://flask.palletsprojects.com/en/latest/api/>.
         """
     data = request.json
+    print(data)
     body = data['comment']['body']
 
     # get the log file
@@ -24,9 +25,11 @@ def handle_request(request):
     if not latestlog_link:
         return {}
     log_file = requests.post(latestlog_link.group(0)).text
+    print(log_file)
 
     # Send it to the parser
     parsed_json = requests.post('https://pojav-parser-function-3tx4ib7zya-uw.a.run.app', data=log_file).json()
+    print(parsed_json)
 
     # Build the response string
     comment_content = "**Pojav version:** {0}-{1}-{2}-{3}\n\r".format(
@@ -46,5 +49,6 @@ def handle_request(request):
     comment_json = {"body": comment_content}
     token = "Bearer {}".format(os.environ.get('TOKEN_GITHUB'))
     comment_response = requests.post(data['comment']['issue_url'], auth=token, json=comment_json)
+    print(comment_response)
 
     return {}
