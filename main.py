@@ -9,7 +9,6 @@ def get_latestlog_file(comment_body: str) -> str:
     if not latestlog_link:
         return ""
     log_file = requests.get(latestlog_link.group(0)).text
-    print(log_file)
     return log_file
 
 
@@ -28,6 +27,7 @@ def build_response_comment(parsed_json: dict) -> str:
     for error in parsed_json['errors']:
         comment_content += "\t{0}\n\r".format(error)
 
+    print(comment_content)
     return comment_content
 
 
@@ -58,5 +58,6 @@ def handle_request(request):
     token = "Bearer {}".format(os.environ.get('TOKEN_GITHUB'))
     comment_response = requests.post(data['comment']['issue_url'], headers={'Authorization': token}, json=comment_json)
     print(comment_response)
+    print(comment_response.json())
 
     return {}
