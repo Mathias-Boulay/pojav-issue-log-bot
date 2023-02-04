@@ -21,7 +21,7 @@ TEMPLATE_ISSUE = """
 
 TEMPLATE_ERROR_HEADER = """
 |Errors Found: |
-|--|--|
+|--|
 """
 
 TEMPLATE_ERROR_ROW = "| {error} |\n"
