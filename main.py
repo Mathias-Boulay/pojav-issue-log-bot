@@ -2,6 +2,8 @@ import functions_framework
 import requests
 import re
 import os
+import hmac
+import hashlib
 
 
 def get_latestlog_file(comment_body: str) -> str:
@@ -10,6 +12,26 @@ def get_latestlog_file(comment_body: str) -> str:
         return ""
     log_file = requests.get(latestlog_link.group(0)).text
     return log_file
+
+
+def validate_signature(request):
+    """
+        HTTP Cloud Function that declares a variable.
+        Args:
+            request (flask.Request): The request object.
+            <https://flask.palletsprojects.com/en/latest/api/>
+    """
+    env_value = os.getenv('PRIVATE_HASH_KEY', '')
+    if not env_value:
+        print("Warning: no private key has been set, accepting all requests !")
+        return True
+
+    key = bytes(env_value, 'utf-8')
+    expected_signature = hmac.new(key=key, msg=request.data, digestmod=hashlib.sha1).hexdigest()
+    incoming_signature = request.headers.get('X-Hub-Signature').split('sha1=')[-1].strip()
+    if not hmac.compare_digest(incoming_signature, expected_signature):
+        return False
+    return True
 
 
 def build_response_comment(parsed_json: dict) -> str:
@@ -43,21 +65,24 @@ def handle_request(request):
             Response object using `make_response`
             <https://flask.palletsprojects.com/en/latest/api/>.
         """
+    # Make sure the request came from Github
+    if not validate_signature(request):
+        return {}, 401
+
     data = request.json
-    print(data)
     body = data['comment']['body']
 
     # get the log file
     log_content = get_latestlog_file(body)
 
     # Send it to the parser
-    parsed_json = requests.post('https://pojav-parser-function-3tx4ib7zya-uw.a.run.app', data=log_content).json()
-    print(parsed_json)
+    response_parser = requests.post('https://pojav-parser-function-3tx4ib7zya-uw.a.run.app', data=log_content)
+    response_parser.raise_for_status()
+    parser_json = response_parser.json()
 
-    comment_json = {"body": build_response_comment(parsed_json)}
+    comment_json = {"body": build_response_comment(parser_json)}
     token = "Bearer {}".format(os.environ.get('TOKEN_GITHUB'))
     comment_response = requests.post(data['issue']['comments_url'], headers={'Authorization': token}, json=comment_json)
-    print(comment_response)
-    print(comment_response.json())
+    comment_response.raise_for_status()
 
     return {}
