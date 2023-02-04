@@ -28,7 +28,7 @@ TEMPLATE_ERROR_ROW = "| {error} |\n"
 
 
 def get_latestlog_file(comment_body: str) -> str:
-    latestlog_link = re.search(r'https://github\.com/PojavLauncherTeam/PojavLauncher/files/.*?/latestlog\.txt', comment_body)
+    latestlog_link = re.search(r'https://github\.com/PojavLauncherTeam/PojavLauncher/files/.*?/latestlog[-a-zA-Z0-9@:%._\+~#=]*?\.txt', comment_body)
     if not latestlog_link:
         return ""
     log_file = requests.get(latestlog_link.group(0)).text
