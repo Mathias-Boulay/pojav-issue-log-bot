@@ -6,6 +6,27 @@ import hmac
 import hashlib
 
 
+TEMPLATE_ISSUE = """
+|Field| Value |
+|--|--|
+| Build type | {build_type} |
+| Pojav version | {pojav_version} |
+| Minecraft version | {minecraft_version} |
+| Renderer | {renderer} |
+| Architecture | {architecture} |
+| Java runtime | {java_runtime} |
+| Java arguments | {java_arguments} |
+
+"""
+
+TEMPLATE_ERROR_HEADER = """
+|Errors Found: |
+|--|--|
+"""
+
+TEMPLATE_ERROR_ROW = "| {error} |\n"
+
+
 def get_latestlog_file(comment_body: str) -> str:
     latestlog_link = re.search(r'https://github\.com/PojavLauncherTeam/PojavLauncher/files/.*?/latestlog\.txt', comment_body)
     if not latestlog_link:
@@ -34,23 +55,34 @@ def validate_signature(request):
     return True
 
 
-def build_response_comment(parsed_json: dict) -> str:
-    comment_content = "**Pojav version:** {0}-{1}-{2}-{3}\n\r".format(
-        parsed_json['version']['major_code'], parsed_json['version']['commit_number'],
-        parsed_json['version']['commit_short'], parsed_json['version']['branch'])
-    comment_content += "**Architecture:** {}\n\r".format(parsed_json.get('architecture'))
-    comment_content += "**Renderer:** {}\n\r".format(parsed_json['renderer'])
-    comment_content += "**Minecraft version:** {0} - Type:{1}\n\r".format(
-        parsed_json['minecraft_version']['name'], parsed_json['minecraft_version']['type'])
-    comment_content += "**Java version:** {0} {1} {2}\n\r".format(
-        parsed_json['java_runtime']['source'], parsed_json['java_runtime']['type'],
-        parsed_json['java_runtime']['version'])
-    comment_content += "**Errors detected:** \n\r"
-    for error in parsed_json['errors']:
-        comment_content += "\t{0}\n\r".format(error)
+def build_info_comment(parsed_json: dict) -> str:
+    pojav_version = parsed_json['version']
+    mc_version = parsed_json['minecraft_version']
+    java_runtime = parsed_json['java_runtime']
+    return TEMPLATE_ISSUE.format(
+        build_type=parsed_json['build_type'],
+        pojav_version="{} - {} - {}".format(pojav_version['major_code'], pojav_version['commit_number'], pojav_version['branch']),
+        minecraft_version="{} - {}".format(mc_version['name'], mc_version['type']),
+        renderer="{}".format(parsed_json['renderer']),
+        architecture='{}'.format(parsed_json['architecture']),
+        java_runtime='{} - {} - {}'.format(java_runtime['source'], java_runtime['type'], java_runtime['version']),
+        java_arguments=parsed_json['java_arguments']
+    )
 
-    print(comment_content)
-    return comment_content
+
+def build_error_comment(errors: list[str]) -> str:
+    if not errors:
+        return ""
+
+    final_string = ""
+    for error in errors:
+        final_string += TEMPLATE_ERROR_ROW.format(error=error)
+
+    return TEMPLATE_ERROR_HEADER + final_string
+
+
+def build_response_comment(parsed_json: dict):
+    return build_info_comment(parsed_json) + '\n' + build_error_comment(parsed_json['errors'])
 
 
 @functions_framework.http

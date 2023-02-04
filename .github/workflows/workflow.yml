@@ -32,6 +32,7 @@ jobs:
         --allow-unauthenticated
         --entry-point=handle_request
         --set-env-vars TOKEN_GITHUB="${{ secrets.TOKEN_GITHUB }}"
+        --set-env-vars PRIVATE_HASH_KEY="${{ secrets.PRIVATE_HASH_KEY }}"
 
     - id: 'describe'
       run: >
